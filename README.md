@@ -221,7 +221,7 @@ Code signing certificates cost money and this is a free utility, so the honest o
 ## Build from source
 
 ```bat
-git clone https://github.com/<your-name>/deeptutor-tray.git
+git clone https://github.com/sehiel/deeptutor-tray.git
 cd deeptutor-tray
 python -m venv .venv
 .venv\Scripts\pip install -r requirements-dev.txt
