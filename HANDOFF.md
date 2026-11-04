@@ -33,7 +33,7 @@ launcher/
 
 构建产物在 `dist/DeepTutorTray-v0.9.0-win64.exe`（约 18 MB）。`build/`、`data/` 是构建与运行残留，不用管。
 
-## 2. 已经做完并且验证过的（v1.1 基线）
+## 2. 早期就完成并且验证过的部分
 
 | 项 | 验证方式 |
 |---|---|
@@ -50,18 +50,23 @@ launcher/
 诊断命令：`DeepTutorTray-v0.9.0-win64.exe --check`（JSON 状态）、`--dump-icon <path>`（导出托盘图标）、
 `--test-toast`（发一条测试 Toast，验证通知通道）。
 
-## 3. v1.2 新增功能（源码已完成，**实机验证待做**）
+## 3. 网页启动器 / 最近任务 / 完成通知（均已实机验证）
 
 1. **本地网页启动器** `http://127.0.0.1:47914`
    - `GET /` 返回 `web/index.html`（内联 token 注入 `__LAUNCHER_TOKEN__`）。
-   - `GET /api/state`、`POST /api/action` 都要求 `X-Launcher-Token` 头；POST 还校验 Origin。
+   - `GET /api/state`、`POST /api/action` 都要求 `X-Launcher-Token` 头；POST 还校验 Origin 与 Host。
    - 页面每 5s 轮询状态，任务卡片点击走 `open_chat`。
-2. **托盘「最近任务」**：`menu_items()` 里 `_sessions[:5]`，条目带 `avatar`（PIL 圆形图）。
-   - 头像渲染 `partner_avatar_image()`：avatar data URL → emoji 圆盘 → 首字母圆盘。
-   - 点击 `task:<partner_id>:<session_key>` → `open_chat()`。
+2. **托盘「最近任务」**：`menu_items()` 里 `_pick_menu_tasks(_sessions, MAX_MENU_TASKS)`，
+   条目带 `avatar`（PIL 圆形图）。
+   - 头像渲染 `partner_avatar_image()`：avatar data URL → emoji 圆盘 → 首字母圆盘；
+     非伙伴来源用 `source_avatar_image()`（主对话「主」字、群组「群」字）。
+   - 伙伴/群组聊天在菜单里**优先占位**（菜单只有 5 行，纯按时间排会被主对话挤掉）；
+     网页端 12 条，纯时间倒序。
+   - 点击 id 格式 `task:<source>:<partner_id>:<session_key>` → `open_chat()`，
+     `source` 决定走 web-continuity 还是直接开 `/chat/<session_key>`。
 3. **任务完成 Toast**：
-   - `watcher_loop()` 每 5s 拉 `/api/partners/navigation`，并为每个伙伴起
-     `ws_watcher()` 线程连接 `/ws/partners/<id>`，发 `attach` 订阅 activity feed。
+   - `watcher_loop()` 每 5s 拉 `/api/partners/navigation` 与 `/api/sessions`，
+     并为每个伙伴起 `ws_watcher()` 线程连接 `/ws/partners/<id>`，发 `attach` 订阅 activity feed。
    - `user_echo` 帧标记会话 running；`done` 帧触发 `handle_task_done()`。
    - **防历史误报**：连接后 3s 热身期内的 `user_echo` 不算数，只有热身期后开始的
      turn 完成才通知。
@@ -69,29 +74,27 @@ launcher/
    - 通知前先 `PUT /api/partners/<id>/web-continuity` 绑定会话，点击 toast 用
      `activationType="protocol"` 打开 `http://localhost:3782/partners/<id>`。
    - `notify.py` 借 Windows PowerShell 已注册 AUMID 发 Toast，免注册。
+   - **WS 保活**：`WS_CONNECT_TIMEOUT=15` / `WS_RECV_TIMEOUT=45` 分开设置 ——
+     recv 超时必须大于 uvicorn 的 `ws_ping_interval`（20s），否则每 15 秒假性重连一次。
 4. **Web 动作**：`start/restart/stop/quit/open_chat/refresh`；网页「停止服务」走
-   `stop_service_only()`（只停服务，托盘保留），托盘「停止服务」仍是 `stop_then_quit()`。
+   `stop_service_only()`（只停服务，托盘保留），托盘「退出」是 `quit_all()`（停服务并退出）。
 
 ## 4. 没验证 / 需要接手者确认的（重点）
 
-1. **v1.2 全部实机行为未验证**：网页加载/轮询、任务列表显示、点击跳转、托盘任务区渲染、
-   Toast 弹出、点击 toast 打开聊天、WS 连接与 `done` 触发。源码只做了语法检查。
-2. **PowerShell Toast 在目标机的实际显示**：`notify.py` 用的 PowerShell AUMID 是社区通行做法，
+1. **PowerShell Toast 在目标机的实际显示**：`notify.py` 用的 PowerShell AUMID 是社区通行做法，
    但 Windows 11 不同版本对"非打包应用"的 toast 策略有差异。若 toast 不显示，先手动跑：
    ```
    python notify.py C:\...\avatars\cyber-tutor.png
    ```
    失败时 `launcher-tray.log` 会有记录；代码已回退到 `pystray.Icon.notify()` 气泡。
-3. **WS activity feed 是否真的推送 web 聊天**：源码显示 `_web_activity_mirrored` 会把 web turn
-   镜像到 activity feed（`runtime.py`），但**实机未验证**。若浏览器聊天不触发通知，检查
-   `launcher-tray.log` 是否出现 `ws connected` 与 `task done`。
-4. **托盘图标的实际显示**（沿用 v1.1 遗留）：只能 `--dump-icon` 验证生成图，无法确认通知区
+2. **托盘图标的实际显示**：只能 `--dump-icon` 验证生成图，无法确认通知区
    真的换了。接手后：完全退出托盘（任务管理器确认无 `DeepTutorTray-v0.9.0-win64.exe`）→ 重新双击 → 看图标。
-5. **自绘菜单在真实右键流程下的表现**（沿用 v1.1 遗留）：`pystray._win32.Icon._on_notify`
+3. **自绘菜单在真实右键流程下的表现**：`pystray._win32.Icon._on_notify`
    monkeypatch 位置依赖 pystray 0.19.5，升级 pystray 需重新验证。
-6. **多显示器 / 混合 DPI**（沿用 v1.1 遗留）：定位用主屏尺寸钳制，多屏可能贴边异常。
-7. **非中文 Windows**：菜单文案硬编码中文；字体回退链 微软雅黑 → 黑体 → PIL 位图字体。
-8. **SmartScreen / 杀软**：未签名，首次运行大概率被拦。README 已写处理方式。
+4. **多显示器 / 混合 DPI**：定位用主屏尺寸钳制，多屏可能贴边异常。
+5. **非中文 Windows**：菜单文案硬编码中文；字体回退链 微软雅黑 → 黑体 → PIL 位图字体。
+6. **SmartScreen / 杀软**：未签名，首次运行大概率被拦。README 已写处理方式。
+7. **DeepTutor 1.7.1**：本项目实测基于 1.7.0，1.7.1 尚未实机验证。
 
 ## 5. 想改样式，改哪儿
 
@@ -114,7 +117,8 @@ BG / BORDER / HOVER / TEXT / TEXT_MUTED / TEXT_DISABLED / SEP   # 配色
 字号在 `render()` 里：条目 13px、状态行 12px，都乘了 DPI 缩放。
 「打开网页」加粗是因为 `primary=True` —— 在 `launcher.py` 的 `menu_items()` 里去掉即可。
 
-任务条目的标题截断在 `launcher.py::menu_items()`（22 字符 + …）；最多 5 条（`MAX_MENU_TASKS`）。
+任务条目的标题截断在 `launcher.py::menu_items()`（按**实测像素宽度**，不按字符数）；
+最多 5 条（`MAX_MENU_TASKS`）。
 
 网页样式全在 `web/index.html` 顶部 `<style>`（CSS 变量，浅色/深色两套）。
 
@@ -155,7 +159,7 @@ build.bat
 
 产物 `dist\DeepTutorTray-v0.9.0-win64.exe`，拷到 DeepTutor 安装目录（和 `start.bat` 同一层）使用。
 
-## 9. 实机验收清单（v1.2）
+## 9. 实机验收清单
 
 详见 `TESTING.md`（构建、自检命令、逐项功能验收）。要点：
 
