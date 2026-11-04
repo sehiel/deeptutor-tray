@@ -233,6 +233,8 @@ Icon artwork supplied by the repository owner. DeepTutor itself is
 [Apache-2.0](https://github.com/HKUDS/DeepTutor/blob/main/LICENSE); this launcher is an
 independent work and ships none of its code.
 
+Parts of this project were developed with AI assistance (Claude).
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE).
