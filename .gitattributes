@@ -1,0 +1,22 @@
+# 行尾策略：仓库里统一存 LF，检出时按类型转换。
+# 避免"同一个文件在 Windows 和 Linux 上 diff 全是改动"的噪音。
+
+* text=auto eol=lf
+
+# Windows 批处理必须是 CRLF —— LF 下 goto/多行命令在 cmd.exe 里会有怪问题。
+*.bat text eol=crlf
+
+# 源码在 Windows 上开发，检出成 CRLF 与编辑器/IDE 行为一致。
+*.py text eol=crlf
+*.ps1 text eol=crlf
+
+# 文档与前端用 LF（跨平台通用，Markdown 渲染也最稳）。
+*.md text eol=lf
+*.html text eol=lf
+*.txt text eol=lf
+
+# 二进制，不做任何转换。
+*.png binary
+*.ico binary
+*.exe binary
+*.zip binary

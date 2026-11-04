@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeepTutor 启动器</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --border: #e6e8ec;
+    --text: #1a1e23;
+    --muted: #8a919c;
+    --accent: #2563eb;
+    --accent-soft: #eff4ff;
+    --green: #15803d;
+    --green-soft: #e8f6ee;
+    --amber: #a16207;
+    --amber-soft: #fbf3e2;
+    --gray: #6b7280;
+    --gray-soft: #f0f1f3;
+    --shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #131519;
+      --card: #1c1f24;
+      --border: #2a2e35;
+      --text: #e8eaed;
+      --muted: #9aa1ab;
+      --accent: #5b8def;
+      --accent-soft: #1d2a44;
+      --green: #4ade80;
+      --green-soft: #16301f;
+      --amber: #fbbf24;
+      --amber-soft: #33290f;
+      --gray: #9ca3af;
+      --gray-soft: #262a31;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 64px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { width: 100%; max-width: 760px; }
+
+  /* 头部 */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .brand {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow);
+    flex: none;
+  }
+  .brand svg { width: 26px; height: 26px; }
+  .brand-text h1 { font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+  .brand-text p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .spacer { flex: 1; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 13px; font-weight: 600;
+    padding: 6px 12px; border-radius: 999px;
+    background: var(--gray-soft); color: var(--gray);
+  }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .pill.running { background: var(--green-soft); color: var(--green); }
+  .pill.running .dot { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  /* 操作按钮 */
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+  button {
+    font: inherit; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform .08s ease, background .15s ease, border-color .15s ease;
+  }
+  button:hover { background: var(--gray-soft); }
+  button:active { transform: scale(.97); }
+  button:disabled { opacity: .5; cursor: default; }
+  button.primary {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  button.primary:hover { background: #1d4ed8; }
+  button.danger:hover { background: #fde8e8; border-color: #f3b4b4; color: #b91c1c; }
+  @media (prefers-color-scheme: dark) { button.danger:hover { background:#3a1a1a; color:#fca5a5; } }
+
+  /* 任务区 */
+  .section-title {
+    font-size: 13px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .6px;
+    margin-bottom: 10px;
+  }
+  .task-list { display: flex; flex-direction: column; gap: 10px; }
+  .task {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform .08s ease, border-color .15s ease;
+  }
+  .task:hover { border-color: var(--accent); }
+  .task:active { transform: scale(.995); }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 23px; flex: none; overflow: hidden;
+    background: var(--gray-soft);
+    color: #fff;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .task-info { flex: 1; min-width: 0; }
+  .task-title {
+    font-size: 14px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .task-meta {
+    font-size: 12px; color: var(--muted); margin-top: 3px;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .badge {
+    font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 999px;
+    flex: none;
+  }
+  .badge.running { background: var(--amber-soft); color: var(--amber); }
+  .badge.completed { background: var(--green-soft); color: var(--green); }
+  .badge.idle { background: var(--gray-soft); color: var(--gray); }
+  .badge.source { background: var(--accent-soft); color: var(--accent); }
+  .time { flex: none; font-size: 12px; color: var(--muted); }
+
+  .empty {
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  footer {
+    margin-top: 32px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.8;
+  }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--bg);
+    font-size: 13px; font-weight: 600;
+    padding: 10px 18px; border-radius: 10px;
+    box-shadow: var(--shadow);
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s ease;
+    z-index: 10;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 2l8 4.5v9L12 20l-8-4.5v-9L12 2z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M12 6.5v7M8.5 9l7 4M15.5 9l-7 4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>DeepTutor 启动器</h1>
+      <p id="subtitle">本地服务 · Web-Local Launcher</p>
+    </div>
+    <div class="spacer"></div>
+    <span class="pill" id="statusPill"><span class="dot"></span><span id="statusText">检测中…</span></span>
+  </header>
+
+  <div class="actions">
+    <button class="primary" id="btnOpen" disabled>打开网页</button>
+    <button id="btnStart" disabled>启动服务</button>
+    <button id="btnRestart" disabled>重启服务</button>
+    <button id="btnStop" disabled>停止服务</button>
+    <button class="danger" id="btnQuit">退出启动器</button>
+  </div>
+
+  <div class="section-title">最近任务</div>
+  <div class="task-list" id="taskList"></div>
+
+  <footer>
+    DeepTutor Tray Launcher <span id="launcherVersion"></span> · 本地页面仅本机可访问<br>
+    <span id="launcherUrl"></span>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TOKEN = "__LAUNCHER_TOKEN__";
+const listEl = document.getElementById("taskList");
+const statusPill = document.getElementById("statusPill");
+const statusText = document.getElementById("statusText");
+const subtitle = document.getElementById("subtitle");
+const launcherUrlEl = document.getElementById("launcherUrl");
+const launcherVersionEl = document.getElementById("launcherVersion");
+const toastEl = document.getElementById("toast");
+
+let toastTimer = null;
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2200);
+}
+
+async function api(path, options = {}) {
+  const headers = { "X-Launcher-Token": TOKEN, ...(options.headers || {}) };
+  const res = await fetch(path, { ...options, headers });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
+}
+
+function fmtTime(ts) {
+  if (!ts) return "";
+  const diff = Date.now() / 1000 - ts;
+  if (diff < 60) return "刚刚";
+  if (diff < 3600) return Math.floor(diff / 60) + " 分钟前";
+  if (diff < 86400) return Math.floor(diff / 3600) + " 小时前";
+  const d = new Date(ts * 1000);
+  return (d.getMonth() + 1) + "月" + d.getDate() + "日";
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+// 颜色会拼进 style 属性，必须限制成安全的颜色字面量，
+// 否则伙伴配置里的值可以借此逃逸属性、注入事件处理器。
+function safeColor(v) {
+  const s = String(v || "").trim();
+  return /^#[0-9a-fA-F]{3,8}$/.test(s) ? s : "#2563eb";
+}
+
+// 非伙伴来源没有头像概念，用来源标识圆盘区分。
+const SOURCE_STYLE = {
+  group: { label: "群", color: "#7c3aed" },
+  chat:  { label: "主", color: "#0f766e" },
+};
+
+function avatarHtml(p, source) {
+  if (source && source !== "partner") {
+    const st = SOURCE_STYLE[source] || { label: "?", color: "#64748b" };
+    return `<span style="background:${st.color};font-size:17px;font-weight:600">${escapeHtml(st.label)}</span>`;
+  }
+  const avatar = p && p.avatar ? String(p.avatar) : "";
+  if (avatar) return `<img src="${escapeHtml(avatar)}" alt="">`;
+  const color = safeColor(p && p.color);
+  const emoji = (p && p.emoji) ? String(p.emoji) : "";
+  const name = ((p && p.name) || "?").trim();
+  if (emoji) return `<span style="background:${color}">${escapeHtml(emoji)}</span>`;
+  const initial = escapeHtml((name[0] || "?").toUpperCase());
+  return `<span style="background:${color};font-size:17px;font-weight:600">${initial}</span>`;
+}
+
+function statusBadge(status) {
+  if (status === "running") return `<span class="badge running">处理中</span>`;
+  if (status === "completed") return `<span class="badge completed">已完成</span>`;
+  return `<span class="badge idle">空闲</span>`;
+}
+
+function render(state) {
+  const running = state.running;
+  statusPill.className = "pill" + (running ? " running" : "");
+  statusText.textContent = state.status_text || (running ? "运行中" : "已停止");
+  subtitle.textContent = running ? "本地服务 · 运行中" : "本地服务 · 已停止";
+  launcherUrlEl.textContent = state.launcher_url || "";
+  launcherVersionEl.textContent = state.version ? "v" + state.version : "";
+
+  document.getElementById("btnOpen").disabled = !running;
+  document.getElementById("btnStart").disabled = running;
+  document.getElementById("btnRestart").disabled = !running;
+  document.getElementById("btnStop").disabled = !running;
+
+  const partners = Object.fromEntries((state.partners || []).map(p => [p.partner_id, p]));
+  const sessions = state.sessions || [];
+  if (!sessions.length) {
+    listEl.innerHTML = '<div class="empty">暂无任务 —— 去聊一句或和伙伴对话，记录会出现在这里。</div>';
+    return;
+  }
+  listEl.innerHTML = "";
+  for (const s of sessions.slice(0, 12)) {
+    const source = s.source || "partner";
+    const p = partners[s.partner_id] || {};
+    const card = document.createElement("div");
+    card.className = "task";
+    card.title = "点击进入聊天：" + s.title;
+    card.innerHTML = `
+      <div class="avatar">${avatarHtml(p, source)}</div>
+      <div class="task-info">
+        <div class="task-title">${escapeHtml(s.title)}</div>
+        <div class="task-meta">
+          <span>${escapeHtml(s.partner_name || s.partner_id)}</span>
+          ${sourceBadge(s.source)}
+          ${statusBadge(s.status)}
+        </div>
+      </div>
+      <span class="time">${fmtTime(s.updated_at)}</span>`;
+    card.addEventListener("click", () => openChat(s));
+    listEl.appendChild(card);
+  }
+}
+
+// 来源标签：伙伴聊天是主路径，不加标签保持原样；其他来源加一个区分标记。
+function sourceBadge(source) {
+  if (!source || source === "partner") return "";
+  const label = { group: "群组", chat: "主对话" }[source] || source;
+  return `<span class="badge source">${escapeHtml(label)}</span>`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+async function openChat(s) {
+  try {
+    await api("/api/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "open_chat",
+        partner_id: s.partner_id,
+        session_key: s.session_key,
+        source: s.source || "partner",
+      }),
+    });
+  } catch (e) {
+    toast("跳转失败：" + e.message);
+  }
+}
+
+async function doAction(action, confirmText) {
+  if (confirmText && !confirm(confirmText)) return;
+  try {
+    const r = await api("/api/action", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    if (!r.ok) toast(r.error || "操作失败");
+    else toast("已执行");
+    setTimeout(loadState, 600);
+  } catch (e) {
+    toast("操作失败：" + e.message);
+  }
+}
+
+async function loadState() {
+  try {
+    const state = await api("/api/state");
+    render(state);
+  } catch (e) {
+    statusText.textContent = "启动器离线";
+    statusPill.className = "pill";
+  }
+}
+
+document.getElementById("btnOpen").addEventListener("click", () => doAction("open"));
+document.getElementById("btnStart").addEventListener("click", () => doAction("start"));
+document.getElementById("btnRestart").addEventListener("click", () => doAction("restart"));
+document.getElementById("btnStop").addEventListener("click", () => doAction("stop", "确定停止 DeepTutor 服务吗？"));
+document.getElementById("btnQuit").addEventListener("click", () => doAction("quit", "退出会同时停止 DeepTutor 服务，确定吗？"));
+
+loadState();
+setInterval(loadState, 5000);
+</script>
+</body>
+</html>

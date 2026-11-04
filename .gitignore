@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+build/
+dist/
+*.spec
+data/
+*.log
+
+# WorkBuddy 本地工作区数据（含 memory），不属于源码
+.workbuddy/
+
+# 生成的 PE 版本资源由 build.bat 从 version.py 重新生成
+version_info.txt
+.app_name

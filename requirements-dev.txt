@@ -1,0 +1,10 @@
+# 版本必须 pin，不能用 >=：
+#   pystray —— launcher.py monkeypatch 了它的私有 API
+#              (pystray._win32.Icon._on_notify / pystray._util.win32)，
+#              0.19.5 之后的版本一旦改了这些内部结构，托盘右键菜单会直接失效。
+#   pillow / websocket-client —— API 稳定，但固定版本才能复现出同样的 exe。
+#   pyinstaller —— 打包产物对版本敏感，锁定以保证可重复构建。
+pystray==0.19.5
+pillow==13.0.0
+websocket-client==1.9.2
+pyinstaller==6.22.3
