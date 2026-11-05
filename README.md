@@ -151,11 +151,12 @@ active path.
 
 ## Build from source
 
+Requirements: **Python 3.11+ (64-bit) on `PATH`**. Nothing else — `build.bat` creates the
+virtual environment and installs the pinned build dependencies itself.
+
 ```bat
 git clone https://github.com/sehiel/deeptutor-tray.git
 cd deeptutor-tray
-python -m venv .venv
-.venv\Scripts\pip install -r requirements-dev.txt
 build.bat
 ```
 
